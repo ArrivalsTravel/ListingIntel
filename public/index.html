@@ -3,89 +3,99 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Listing Finder — Find Direct Booking Sites</title>
+  <title>Listing Intel — Arrivals Collection</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0f1117;
-      --surface:   #1a1d27;
-      --surface2:  #22263a;
-      --border:    #2e3347;
-      --text:      #e8eaf0;
-      --muted:     #7c8298;
-      --accent:    #4f7cff;
-      --accent-hl: #6b94ff;
-      --green:     #22c55e;
-      --green-dim: #1a3a28;
-      --orange:    #f97316;
-      --orange-dim:#3a2210;
-      --gray-dim:  #1e2130;
-      --radius:    12px;
-      --font:      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --dark:      #1A0C0D;
+      --dark2:     #221013;
+      --dark3:     #2a1418;
+      --border:    #3a1e22;
+      --orange:    #D37D4A;
+      --orange-dim:#3a200f;
+      --green:     #87966D;
+      --green-dim: #1e2618;
+      --stone:     #E2DAD8;
+      --stone-dim: #2a2120;
+      --white:     #FFFFFF;
+      --muted:     #8a7070;
+      --radius:    10px;
+      --serif:     'Cormorant Garamond', Georgia, serif;
+      --sans:      'Inter', -apple-system, sans-serif;
     }
 
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
+      background: var(--dark);
+      color: var(--stone);
+      font-family: var(--sans);
+      font-weight: 300;
       min-height: 100vh;
       padding: 0 16px 80px;
     }
 
     /* ── Header ── */
     header {
-      max-width: 720px;
+      max-width: 680px;
       margin: 0 auto;
-      padding: 56px 0 40px;
+      padding: 60px 0 44px;
       text-align: center;
     }
-    .logo {
+
+    .wordmark {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 20px;
+      margin-bottom: 28px;
+      letter-spacing: 3px;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      color: var(--orange);
+      font-family: var(--sans);
     }
-    .logo-icon {
-      width: 40px; height: 40px;
-      background: linear-gradient(135deg, var(--accent), #a855f7);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
+    .wordmark-dot {
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--orange);
+      opacity: 0.6;
     }
-    .logo-text {
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-    }
+
     header h1 {
-      font-size: clamp(28px, 5vw, 42px);
-      font-weight: 800;
-      letter-spacing: -1px;
-      line-height: 1.15;
-      margin-bottom: 14px;
-      background: linear-gradient(135deg, #fff 40%, #8899cc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-family: var(--serif);
+      font-size: clamp(38px, 6vw, 58px);
+      font-weight: 300;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+      color: var(--white);
+      margin-bottom: 18px;
+    }
+    header h1 em {
+      font-style: italic;
+      color: var(--orange);
     }
     header p {
       color: var(--muted);
-      font-size: 16px;
-      line-height: 1.6;
-      max-width: 520px;
+      font-size: 15px;
+      line-height: 1.7;
+      max-width: 480px;
       margin: 0 auto;
+      font-weight: 300;
     }
 
     /* ── Search Card ── */
     .search-card {
-      max-width: 720px;
+      max-width: 680px;
       margin: 0 auto 32px;
-      background: var(--surface);
+      background: var(--dark2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 24px;
     }
+
     .input-group {
       display: flex;
       gap: 10px;
@@ -94,47 +104,53 @@
     .url-input {
       flex: 1;
       min-width: 0;
-      background: var(--bg);
+      background: var(--dark);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 16px;
+      border-radius: 6px;
+      padding: 13px 16px;
       font-size: 14px;
-      color: var(--text);
+      color: var(--stone);
       outline: none;
       transition: border-color 0.2s;
-      font-family: var(--font);
+      font-family: var(--sans);
+      font-weight: 300;
     }
     .url-input::placeholder { color: var(--muted); }
-    .url-input:focus { border-color: var(--accent); }
+    .url-input:focus { border-color: var(--orange); }
+
     .btn-primary {
-      background: var(--accent);
-      color: #fff;
+      background: var(--orange);
+      color: var(--dark);
       border: none;
-      border-radius: 8px;
-      padding: 12px 22px;
-      font-size: 14px;
-      font-weight: 600;
+      border-radius: 6px;
+      padding: 13px 24px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
       cursor: pointer;
       white-space: nowrap;
-      transition: background 0.2s, transform 0.1s;
-      font-family: var(--font);
+      transition: opacity 0.2s, transform 0.1s;
+      font-family: var(--sans);
+      text-transform: uppercase;
     }
-    .btn-primary:hover:not(:disabled) { background: var(--accent-hl); }
+    .btn-primary:hover:not(:disabled) { opacity: 0.88; }
     .btn-primary:active:not(:disabled) { transform: scale(0.98); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .or-divider {
       text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-      margin: 14px 0;
+      color: var(--border);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin: 16px 0;
       position: relative;
     }
     .or-divider::before, .or-divider::after {
       content: '';
       position: absolute;
       top: 50%;
-      width: calc(50% - 24px);
+      width: calc(50% - 20px);
       height: 1px;
       background: var(--border);
     }
@@ -145,93 +161,93 @@
       width: 100%;
       background: transparent;
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px;
+      border-radius: 6px;
+      padding: 11px;
       font-size: 13px;
       color: var(--muted);
       cursor: pointer;
       transition: border-color 0.2s, color 0.2s;
-      font-family: var(--font);
+      font-family: var(--sans);
+      letter-spacing: 0.3px;
     }
-    .btn-demo:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-demo:hover { border-color: var(--orange); color: var(--orange); }
 
     .api-notice {
       margin-top: 14px;
       padding: 10px 14px;
-      background: var(--bg);
+      background: var(--dark);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 6px;
       font-size: 12px;
       color: var(--muted);
-      line-height: 1.5;
+      line-height: 1.6;
     }
-    .api-notice a { color: var(--accent); text-decoration: none; }
+    .api-notice a { color: var(--orange); text-decoration: none; }
     .api-notice a:hover { text-decoration: underline; }
     .status-dot {
       display: inline-block;
-      width: 7px; height: 7px;
+      width: 6px; height: 6px;
       border-radius: 50%;
       margin-right: 5px;
       vertical-align: middle;
     }
     .dot-green { background: var(--green); }
-    .dot-red   { background: #ef4444; }
+    .dot-red   { background: #8a3030; }
 
     /* ── Loading ── */
     #loading {
       display: none;
-      max-width: 720px;
+      max-width: 680px;
       margin: 0 auto 24px;
       text-align: center;
-      padding: 40px 0;
+      padding: 48px 0;
     }
     .spinner {
-      width: 40px; height: 40px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
+      width: 36px; height: 36px;
+      border: 2px solid var(--border);
+      border-top-color: var(--orange);
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 16px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 18px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    #loading p { color: var(--muted); font-size: 14px; }
-
-    /* ── Results ── */
-    #results {
-      display: none;
-      max-width: 720px;
-      margin: 0 auto;
+    #loading p {
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: 0.3px;
     }
 
+    /* ── Results ── */
+    #results { display: none; max-width: 680px; margin: 0 auto; }
+
     .section-label {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 1px;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 2px;
       text-transform: uppercase;
       color: var(--muted);
       margin-bottom: 12px;
     }
 
-    /* Contact summary banner */
+    /* Contact banner */
     .contact-banner {
-      background: linear-gradient(135deg, #0f2e1c, #0f1d2e);
-      border: 1px solid #2a4a35;
+      background: var(--green-dim);
+      border: 1px solid rgba(135,150,109,0.25);
       border-radius: var(--radius);
       padding: 20px 24px;
       margin-bottom: 24px;
     }
     .contact-banner.no-contact {
-      background: var(--surface);
+      background: var(--dark2);
       border-color: var(--border);
     }
     .contact-banner h3 {
-      font-size: 13px;
-      font-weight: 600;
+      font-family: var(--serif);
+      font-size: 16px;
+      font-weight: 400;
       color: var(--green);
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      margin-bottom: 12px;
+      letter-spacing: 0.3px;
     }
     .contact-banner.no-contact h3 { color: var(--muted); }
     .contact-items { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -239,45 +255,47 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(34, 197, 94, 0.12);
-      border: 1px solid rgba(34, 197, 94, 0.25);
-      color: #86efac;
-      border-radius: 6px;
+      background: rgba(135,150,109,0.1);
+      border: 1px solid rgba(135,150,109,0.3);
+      color: var(--green);
+      border-radius: 4px;
       padding: 6px 12px;
       font-size: 13px;
       font-family: 'SFMono-Regular', Consolas, monospace;
     }
 
-    /* Stats row */
+    /* Stats */
     .stats-row {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 24px;
       flex-wrap: wrap;
     }
     .stat-chip {
       flex: 1;
       min-width: 100px;
-      background: var(--surface);
+      background: var(--dark2);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px;
+      border-radius: var(--radius);
+      padding: 16px;
       text-align: center;
     }
     .stat-chip .num {
-      font-size: 26px;
-      font-weight: 800;
+      font-family: var(--serif);
+      font-size: 30px;
+      font-weight: 300;
       line-height: 1;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
+      color: var(--stone);
     }
-    .stat-chip .lbl { font-size: 11px; color: var(--muted); }
+    .stat-chip .lbl { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
     .stat-chip.direct .num { color: var(--green); }
     .stat-chip.ota    .num { color: var(--orange); }
 
     /* Match cards */
-    .matches-list { display: flex; flex-direction: column; gap: 8px; }
+    .matches-list { display: flex; flex-direction: column; gap: 6px; }
     .match-card {
-      background: var(--surface);
+      background: var(--dark2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 16px 20px;
@@ -286,18 +304,18 @@
       gap: 14px;
       transition: border-color 0.2s;
     }
-    .match-card:hover { border-color: #3e4460; }
-    .match-card.has-contact { border-color: rgba(34,197,94,0.35); }
+    .match-card:hover { border-color: var(--dark3); }
+    .match-card.has-contact { border-color: rgba(135,150,109,0.3); }
 
     .match-favicon {
-      width: 32px; height: 32px;
-      border-radius: 8px;
-      background: var(--surface2);
+      width: 30px; height: 30px;
+      border-radius: 6px;
+      background: var(--dark3);
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
       overflow: hidden;
     }
-    .match-favicon img { width: 20px; height: 20px; }
+    .match-favicon img { width: 18px; height: 18px; }
 
     .match-body { flex: 1; min-width: 0; }
     .match-top {
@@ -305,41 +323,37 @@
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
     .match-domain {
       font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-weight: 400;
+      color: var(--stone);
     }
-    .match-domain a {
-      color: inherit;
-      text-decoration: none;
-    }
-    .match-domain a:hover { color: var(--accent-hl); }
+    .match-domain a { color: inherit; text-decoration: none; }
+    .match-domain a:hover { color: var(--orange); }
 
     .badge {
-      font-size: 10px;
-      font-weight: 700;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+    .badge-direct  { background: var(--green-dim); color: var(--green); border: 1px solid rgba(135,150,109,0.25); }
+    .badge-ota     { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(211,125,74,0.25); }
+    .badge-unknown { background: var(--stone-dim); color: var(--muted); border: 1px solid var(--border); }
+    .badge-platform {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      font-size: 9px;
+      font-weight: 400;
       letter-spacing: 0.5px;
       padding: 2px 7px;
-      border-radius: 4px;
-      white-space: nowrap;
-    }
-    .badge-direct  { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
-    .badge-ota     { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(249,115,22,0.3); }
-    .badge-unknown { background: var(--gray-dim); color: var(--muted); border: 1px solid var(--border); }
-    .badge-platform {
-      background: rgba(79,124,255,0.1);
-      color: var(--accent-hl);
-      border: 1px solid rgba(79,124,255,0.25);
-      font-size: 10px;
-      font-weight: 600;
-      padding: 2px 7px;
-      border-radius: 4px;
+      border-radius: 3px;
     }
 
     .match-title {
@@ -354,36 +368,45 @@
     .contact-tag {
       font-size: 11px;
       font-family: 'SFMono-Regular', Consolas, monospace;
-      background: rgba(34,197,94,0.08);
-      border: 1px solid rgba(34,197,94,0.2);
-      color: #86efac;
-      border-radius: 4px;
+      background: rgba(135,150,109,0.08);
+      border: 1px solid rgba(135,150,109,0.2);
+      color: var(--green);
+      border-radius: 3px;
       padding: 3px 8px;
       display: flex;
       align-items: center;
       gap: 4px;
     }
 
-    /* ── Error ── */
+    /* Error */
     #error-box {
       display: none;
-      max-width: 720px;
+      max-width: 680px;
       margin: 0 auto 24px;
-      background: #2a1010;
-      border: 1px solid #5a2020;
+      background: #200a0a;
+      border: 1px solid #4a1515;
       border-radius: var(--radius);
       padding: 16px 20px;
-      color: #f87171;
+      color: #c07070;
       font-size: 14px;
     }
 
-    /* ── Footer ── */
+    /* Divider */
+    .results-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 28px 0;
+    }
+
+    /* Footer */
     footer {
-      max-width: 720px;
-      margin: 48px auto 0;
+      max-width: 680px;
+      margin: 52px auto 0;
       text-align: center;
-      color: var(--muted);
-      font-size: 12px;
+      color: var(--border);
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
       border-top: 1px solid var(--border);
       padding-top: 24px;
     }
@@ -391,22 +414,21 @@
     @media (max-width: 480px) {
       .input-group { flex-direction: column; }
       .btn-primary { width: 100%; }
-      .stats-row { gap: 8px; }
     }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">
-    <div class="logo-icon">🔍</div>
-    <span class="logo-text">Listing Finder</span>
+  <div class="wordmark">
+    <span>Arrivals Collection</span>
+    <span class="wordmark-dot"></span>
+    <span>Listing Intel</span>
   </div>
-  <h1>Find where your listing<br>lives across the web</h1>
-  <p>Paste an Airbnb listing URL. We'll reverse-image-search the hero photo to find every PMS booking page and direct website — and surface the host's contact info.</p>
+  <h1>Find where your property<br>lives <em>across the web</em></h1>
+  <p>Paste an Airbnb listing URL. We'll reverse-image-search the hero photo to find every direct booking page and PMS platform — and surface the host's contact information.</p>
 </header>
 
-<!-- Search Card -->
 <div class="search-card">
   <div class="input-group">
     <input
@@ -418,57 +440,41 @@
       spellcheck="false"
     />
     <button class="btn-primary" id="search-btn" onclick="doSearch()">
-      Analyze Listing
+      Analyse
     </button>
   </div>
 
   <div class="or-divider">or</div>
   <button class="btn-demo" onclick="doDemo()">Run demo with sample data →</button>
 
-  <div class="api-notice" id="api-status">
-    Checking API configuration…
-  </div>
+  <div class="api-notice" id="api-status">Checking connection…</div>
 </div>
 
-<!-- Loading -->
 <div id="loading">
   <div class="spinner"></div>
-  <p>Searching across the web…<br><small style="font-size:11px; margin-top:6px; display:block;">This can take 15–30 seconds</small></p>
+  <p>Searching across the web…<br><small style="font-size:11px;margin-top:6px;display:block;opacity:0.6">This may take 15–30 seconds</small></p>
 </div>
 
-<!-- Error -->
 <div id="error-box"></div>
-
-<!-- Results -->
 <div id="results"></div>
 
 <footer>
-  Built with SerpApi + Google Vision API &nbsp;·&nbsp;
-  Contact info sourced from publicly listed pages only
+  Est. 2024 &nbsp;·&nbsp; Contact info sourced from publicly listed pages only
 </footer>
 
 <script>
-  // ── API base URL (works locally and on Vercel) ────────────────────────────
   const API = '/api';
 
-  // ── Check API health on load ──────────────────────────────────────────────
   async function checkHealth() {
     try {
       const r = await fetch(`${API}/health`);
       const d = await r.json();
-      const statusEl = document.getElementById('api-status');
-      const serpOk   = d.serpapi;
-      const visOk    = d.vision;
-      const anyOk    = serpOk || visOk;
-
-      statusEl.innerHTML = `
-        <span class="status-dot ${serpOk ? 'dot-green' : 'dot-red'}"></span>
-        SerpApi ${serpOk ? 'connected' : 'not configured'}
+      const serpOk = d.serpapi, visOk = d.vision, anyOk = serpOk || visOk;
+      document.getElementById('api-status').innerHTML = `
+        <span class="status-dot ${serpOk ? 'dot-green' : 'dot-red'}"></span>SerpApi ${serpOk ? 'connected' : 'not configured'}
         &nbsp;&nbsp;
-        <span class="status-dot ${visOk ? 'dot-green' : 'dot-red'}"></span>
-        Google Vision ${visOk ? 'connected' : 'not configured'}
-        ${!anyOk ? `<br><span style="color:#f97316">⚠ No API key set — only demo mode available.
-        Add <code>SERPAPI_KEY</code> in <a href="https://vercel.com/dashboard" target="_blank">Vercel settings</a>.</span>` : ''}
+        <span class="status-dot ${visOk ? 'dot-green' : 'dot-red'}"></span>Google Vision ${visOk ? 'connected' : 'not configured'}
+        ${!anyOk ? `<br><span style="color:var(--orange)">Add <code>SERPAPI_KEY</code> in <a href="https://vercel.com/dashboard" target="_blank">Vercel settings</a> to enable live searches.</span>` : ''}
       `;
     } catch(e) {
       document.getElementById('api-status').textContent = 'Could not reach API';
@@ -476,18 +482,13 @@
   }
   checkHealth();
 
-  // ── Keyboard shortcut ─────────────────────────────────────────────────────
   document.getElementById('url-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') doSearch();
   });
 
-  // ── Search ────────────────────────────────────────────────────────────────
   async function doSearch() {
     const url = document.getElementById('url-input').value.trim();
-    if (!url) {
-      document.getElementById('url-input').focus();
-      return;
-    }
+    if (!url) { document.getElementById('url-input').focus(); return; }
     await runPipeline({ airbnb_url: url });
   }
 
@@ -499,7 +500,6 @@
     setLoading(true);
     hideError();
     hideResults();
-
     try {
       const res = await fetch(`${API}/search`, {
         method: 'POST',
@@ -507,54 +507,40 @@
         body: JSON.stringify(body),
       });
       const data = await res.json();
-
-      if (!res.ok || data.error) {
-        showError(data.error || `Server error ${res.status}`);
-        return;
-      }
-
+      if (!res.ok || data.error) { showError(data.error || `Server error ${res.status}`); return; }
       renderResults(data);
-    } catch (e) {
+    } catch(e) {
       showError('Could not reach the server. Please try again.');
     } finally {
       setLoading(false);
     }
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
   function renderResults(data) {
     const { summary, matches, is_demo } = data;
     const el = document.getElementById('results');
-
     const emails = summary.emails || [];
     const phones = summary.phones || [];
     const hasContact = emails.length > 0 || phones.length > 0;
 
     const contactItems = [
-      ...emails.map(e => `<span class="contact-chip">📧 ${e}</span>`),
-      ...phones.map(p => `<span class="contact-chip">📞 ${p}</span>`),
+      ...emails.map(e => `<span class="contact-chip">✉ ${e}</span>`),
+      ...phones.map(p => `<span class="contact-chip">↗ ${p}</span>`),
     ].join('');
 
     const matchCards = matches.map(m => {
       const badgeHtml = m.is_ota
         ? `<span class="badge badge-ota">OTA</span>`
         : m.platform
-          ? `<span class="badge badge-direct">DIRECT ✓</span>`
-          : `<span class="badge badge-unknown">UNKNOWN</span>`;
-
-      const platformBadge = m.platform
-        ? `<span class="badge-platform">${m.platform}</span>`
-        : '';
-
+          ? `<span class="badge badge-direct">Direct ✓</span>`
+          : `<span class="badge badge-unknown">Unknown</span>`;
+      const platformBadge = m.platform ? `<span class="badge-platform">${m.platform}</span>` : '';
       const contactTags = [
-        ...(m.emails || []).map(e => `<span class="contact-tag">📧 ${e}</span>`),
-        ...(m.phones || []).map(p => `<span class="contact-tag">📞 ${p}</span>`),
+        ...(m.emails||[]).map(e => `<span class="contact-tag">✉ ${e}</span>`),
+        ...(m.phones||[]).map(p => `<span class="contact-tag">↗ ${p}</span>`),
       ].join('');
-
-      const hasMatchContact = (m.emails?.length || 0) + (m.phones?.length || 0) > 0;
-
+      const hasMatchContact = (m.emails?.length||0) + (m.phones?.length||0) > 0;
       const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(m.domain)}&sz=32`;
-
       return `
         <div class="match-card ${hasMatchContact ? 'has-contact' : ''}">
           <div class="match-favicon">
@@ -562,68 +548,44 @@
           </div>
           <div class="match-body">
             <div class="match-top">
-              <span class="match-domain">
-                <a href="${m.url}" target="_blank" rel="noopener">${m.domain}</a>
-              </span>
-              ${badgeHtml}
-              ${platformBadge}
+              <span class="match-domain"><a href="${m.url}" target="_blank" rel="noopener">${m.domain}</a></span>
+              ${badgeHtml}${platformBadge}
             </div>
             ${m.title ? `<div class="match-title">${escHtml(m.title)}</div>` : ''}
             ${contactTags ? `<div class="match-contact">${contactTags}</div>` : ''}
           </div>
-        </div>
-      `;
+        </div>`;
     }).join('');
 
     el.innerHTML = `
-      ${is_demo ? `<div style="background:#1a2030;border:1px solid #2e3a50;border-radius:8px;padding:10px 14px;font-size:12px;color:#7c8298;margin-bottom:20px;">
-        ⚡ Demo mode — results are simulated. Add a <code>SERPAPI_KEY</code> to run live searches.
+      ${is_demo ? `<div style="border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:11px;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:20px">
+        Demo mode — results are simulated. Add a SERPAPI_KEY for live searches.
       </div>` : ''}
-
-      <div class="contact-banner ${hasContact ? '' : 'no-contact'}" style="margin-bottom:24px">
-        <h3>${hasContact ? '✅ Host contact info found' : '— No contact info found'}</h3>
+      <div class="contact-banner ${hasContact ? '' : 'no-contact'}">
+        <h3>${hasContact ? 'Contact information found' : 'No contact information found'}</h3>
         ${hasContact
           ? `<div class="contact-items">${contactItems}</div>`
-          : `<p style="font-size:13px;color:var(--muted)">No emails or phone numbers were found on the direct-booking pages.
-             The host may not list contact info publicly, or the pages may require JavaScript to load.</p>`
-        }
+          : `<p style="font-size:13px;color:var(--muted);line-height:1.6">No emails or phone numbers were found on the direct-booking pages. The host may not publish contact info publicly, or the pages may require JavaScript to render.</p>`}
       </div>
-
       <div class="stats-row">
-        <div class="stat-chip direct">
-          <div class="num">${summary.direct}</div>
-          <div class="lbl">Direct booking</div>
-        </div>
-        <div class="stat-chip ota">
-          <div class="num">${summary.ota}</div>
-          <div class="lbl">OTA listings</div>
-        </div>
-        <div class="stat-chip">
-          <div class="num">${summary.unknown}</div>
-          <div class="lbl">Unknown / custom</div>
-        </div>
-        <div class="stat-chip">
-          <div class="num">${summary.total}</div>
-          <div class="lbl">Total pages</div>
-        </div>
+        <div class="stat-chip direct"><div class="num">${summary.direct}</div><div class="lbl">Direct booking</div></div>
+        <div class="stat-chip ota"><div class="num">${summary.ota}</div><div class="lbl">OTA listings</div></div>
+        <div class="stat-chip"><div class="num">${summary.unknown}</div><div class="lbl">Unknown</div></div>
+        <div class="stat-chip"><div class="num">${summary.total}</div><div class="lbl">Total pages</div></div>
       </div>
-
       <div class="section-label">All pages found</div>
-      <div class="matches-list">${matchCards}</div>
-    `;
-
+      <div class="matches-list">${matchCards}</div>`;
     el.style.display = 'block';
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // ── UI helpers ────────────────────────────────────────────────────────────
   function setLoading(on) {
     document.getElementById('loading').style.display = on ? 'block' : 'none';
     document.getElementById('search-btn').disabled = on;
   }
   function showError(msg) {
     const el = document.getElementById('error-box');
-    el.textContent = '⚠ ' + msg;
+    el.textContent = msg;
     el.style.display = 'block';
   }
   function hideError()   { document.getElementById('error-box').style.display = 'none'; }
