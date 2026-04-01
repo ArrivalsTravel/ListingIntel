@@ -1,0 +1,3 @@
+[00:00:00.602] Server  LOG     ✓ Ready in 384ms
+[00:02:29.264] Server  WARN    ⚠ Cross origin request detected from vm-q3mzjo44f34c51o49d58zg.vusercontent.net to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
