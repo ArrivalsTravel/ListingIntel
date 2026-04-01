@@ -9,7 +9,6 @@ import {
   ImageIcon, 
   Shield, 
   Zap,
-  CheckCircle2,
   ArrowRight
 } from 'lucide-react'
 import Link from 'next/link'
