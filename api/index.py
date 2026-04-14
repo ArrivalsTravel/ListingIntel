@@ -72,17 +72,26 @@ PMS_PLATFORMS = [
     {"name": "Rezkit",          "patterns": ["rezkit.com"]},
     {"name": "Rentlio",         "patterns": ["rentlio.com"]},
     {"name": "iCal (generic)",  "patterns": [".ical.ics"]},
-    # OTAs — tracked but contact info not scraped
-    {"name": "VRBO",            "patterns": ["vrbo.com", "homeaway.com"]},
+    # OTAs — tracked but contact info not scraped (include country variants)
+    {"name": "VRBO",            "patterns": ["vrbo.com", "vrbo.ca", "homeaway.com", "homeaway.ca"]},
     {"name": "Booking.com",     "patterns": ["booking.com"]},
-    {"name": "TripAdvisor",     "patterns": ["tripadvisor.com", "flipkey.com"]},
-    {"name": "Vacasa",          "patterns": ["vacasa.com"]},
+    {"name": "TripAdvisor",     "patterns": ["tripadvisor.com", "tripadvisor.ca", "tripadvisor.co.uk", "flipkey.com"]},
+    {"name": "Vacasa",          "patterns": ["vacasa.com", "vacasa.ca"]},
     {"name": "Evolve",          "patterns": ["evolvevacationrental.com"]},
-    {"name": "Expedia",         "patterns": ["expedia.com", "hotels.com"]},
+    {"name": "Expedia",         "patterns": ["expedia.com", "expedia.ca", "expedia.co.uk", "hotels.com"]},
     {"name": "Plum Guide",      "patterns": ["plumguide.com"]},
+    {"name": "AvantStay",       "patterns": ["avantstay.com"]},
+    {"name": "Kid & Coe",       "patterns": ["kidandcoe.com"]},
+    {"name": "Sonder",          "patterns": ["sonder.com"]},
+    {"name": "Mint House",      "patterns": ["minthouse.com"]},
+    {"name": "Onefinestay",     "patterns": ["onefinestay.com"]},
 ]
 
-OTA_NAMES = {"VRBO", "Booking.com", "TripAdvisor", "Vacasa", "Evolve", "Expedia", "Plum Guide"}
+OTA_NAMES = {
+    "VRBO", "Booking.com", "TripAdvisor", "Vacasa", "Evolve",
+    "Expedia", "Plum Guide", "AvantStay", "Kid & Coe",
+    "Sonder", "Mint House", "Onefinestay",
+}
 
 SKIP_DOMAINS = {
     "airbnb.com", "airbnb.co.uk", "airbnb.com.au",
@@ -432,6 +441,7 @@ def run_pipeline(image_url: str, is_demo: bool = False) -> dict:
             return {"error": "No API key configured. Add SERPAPI_KEY or GOOGLE_VISION_KEY in Vercel environment variables.", "matches": []}
 
     matches = []
+    hidden_count = 0      # pages we filtered as low-signal noise
     seen = set()
     all_emails, all_phones = [], []
 
@@ -473,6 +483,23 @@ def run_pipeline(image_url: str, is_demo: bool = False) -> dict:
             or (platform is not None and not is_ota)
             or match_type == "exact"
         )
+
+        # A page is worth SHOWING in the results list if it's one of:
+        #   - A known PMS / direct booking platform
+        #   - A known OTA (competitive intel — Airbnb, VRBO, Booking, etc.)
+        #   - An exact image match (same image = very likely same property)
+        #
+        # Everything else is Google Lens visual-similarity noise — unrelated
+        # pages that just happen to contain similar-looking furniture, rooms,
+        # or architectural features. Hide them from the results entirely.
+        should_show = (
+            is_demo
+            or platform is not None      # any PMS or OTA
+            or match_type == "exact"
+        )
+        if not should_show:
+            hidden_count += 1
+            continue
 
         match = {
             "url": url,
@@ -517,6 +544,7 @@ def run_pipeline(image_url: str, is_demo: bool = False) -> dict:
             "direct": sum(1 for m in matches if m["is_direct"]),
             "ota": sum(1 for m in matches if m["is_ota"]),
             "unknown": sum(1 for m in matches if not m["platform"]),
+            "hidden_noise": hidden_count,    # low-signal visual matches we filtered out
             "emails": summary_emails,
             "phones": summary_phones,
         },

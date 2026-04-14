@@ -570,10 +570,12 @@
       <div class="stats-row">
         <div class="stat-chip direct"><div class="num">${summary.direct}</div><div class="lbl">Direct booking</div></div>
         <div class="stat-chip ota"><div class="num">${summary.ota}</div><div class="lbl">OTA listings</div></div>
-        <div class="stat-chip"><div class="num">${summary.unknown}</div><div class="lbl">Unknown</div></div>
-        <div class="stat-chip"><div class="num">${summary.total}</div><div class="lbl">Total pages</div></div>
+        <div class="stat-chip"><div class="num">${summary.unknown}</div><div class="lbl">Exact match</div></div>
       </div>
-      <div class="section-label">All pages found</div>
+      ${summary.hidden_noise ? `<div style="font-size:11px;color:var(--muted);letter-spacing:0.5px;margin-bottom:16px;text-align:center">
+        ${summary.hidden_noise} visually-similar but unrelated pages filtered out
+      </div>` : ''}
+      <div class="section-label">Relevant pages (${summary.total})</div>
       <div class="matches-list">${matchCards}</div>`;
     el.style.display = 'block';
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
