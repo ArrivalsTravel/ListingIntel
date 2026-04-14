@@ -43,12 +43,12 @@ THROTTLE_DELAY  = 0.3  # seconds between scrape requests
 
 PMS_PLATFORMS = [
     {"name": "Lodgify",         "patterns": ["lodgify.com"]},
-    {"name": "OwnerRez",        "patterns": ["ownerrez.com", "ownr.es"]},
-    {"name": "Hostaway",        "patterns": ["hostaway.com"]},
-    {"name": "Guesty",          "patterns": ["guesty.com"]},
-    {"name": "Hostfully",       "patterns": ["hostfully.com"]},
+    {"name": "OwnerRez",        "patterns": ["ownerrez.com", "ownr.es", "secure.ownerreservations.com"]},
+    {"name": "Hostaway",        "patterns": ["hostaway.com", "futurestay.com"]},
+    {"name": "Guesty",          "patterns": ["guesty.com", "guestybookings.com", "/guesty/"]},
+    {"name": "Hostfully",       "patterns": ["hostfully.com", "book.hostfully.com"]},
     {"name": "Hospitable",      "patterns": ["hospitable.com"]},
-    {"name": "Smoobu",          "patterns": ["smoobu.com"]},
+    {"name": "Smoobu",          "patterns": ["smoobu.com", "smoobu.net"]},
     {"name": "iGMS",            "patterns": ["igms.com"]},
     {"name": "Tokeet",          "patterns": ["tokeet.com"]},
     {"name": "Uplisting",       "patterns": ["uplisting.io"]},
