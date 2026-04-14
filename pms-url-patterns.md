@@ -191,6 +191,150 @@ https://debonairesuites.holidayfuture.com/
 
 ---
 
+## Avantio
+
+**Example sites:**
+- costa-rentals.com
+- villaplus.com
+
+**Typical footprint:**
+- Booking engine uses `/en/rentals/` structure
+- `avantio.com` backend calls
+
+**What to look for:**
+- European-focused sites
+- Multi-language toggle + currency switcher
+
+---
+
+## Beds24
+
+**Example sites:**
+- Small independent host sites
+
+**Typical footprint:**
+- Booking URLs like `beds24.com/booking2.php`
+- Very obvious if not white-labeled
+
+**What to look for:**
+- Functional, less polished UI
+- Heavy reliance on embedded widgets
+
+---
+
+## RMS Cloud
+
+**Example sites:**
+- RV parks, resorts, mixed-use accommodations
+
+**Typical footprint:**
+- URLs include `rmscloud.com/Reservation/...`
+
+**What to look for:**
+- "Resort-style" booking flows
+- Grid-style availability calendars
+
+---
+
+## ResNexus
+
+**Example sites:**
+- Bed & breakfasts, inns
+
+**Typical footprint:**
+- Booking engine: `resnexus.com/resnexus/reservations/...`
+
+**What to look for:**
+- Classic inn/B&B design
+- Room-based (not property-based) booking
+
+---
+
+## Little Hotelier
+
+**Example sites:**
+- Boutique hotels, small STR hybrids
+
+**Typical footprint:**
+- Booking URLs include `littlehotelier.com.au/booking2.php`
+
+**What to look for:**
+- Hotel-style booking calendar
+- Date-first UX
+
+---
+
+## iGMS
+
+**Example sites:**
+- Rare for direct booking sites (mostly backend, like Hospitable)
+
+**Typical footprint:**
+- Usually paired with WordPress or custom booking engines
+
+**What to look for:**
+- Not visible — focus is operations, not front-end
+
+---
+
+## GuestPoint
+
+**Example sites:**
+- Independent hotels, regional operators
+
+**Typical footprint:**
+- Booking engine via `guestpoint.com.au` domains
+
+**What to look for:**
+- Traditional hotel UI
+- Simpler layouts
+
+---
+
+## eZee Absolute
+
+**Example sites:**
+- Global budget hotels, small chains
+
+**Typical footprint:**
+- Booking URLs: `ezeereservation.com`
+
+**What to look for:**
+- Very standardized booking interface
+- Strong in Asia/Middle East markets
+
+---
+
+## BookingSync
+
+**Example sites:**
+- Custom-built STR brands
+
+**Typical footprint:**
+- Rare to see directly (API-first platform)
+- Often powers fully custom frontends
+
+**What to look for:**
+- Invisible PMS
+- High-end or niche operator sites
+
+---
+
+## Kigo
+
+**Example sites:**
+- Large US property managers
+
+**Typical footprint:**
+- Booking flows often include `/reservations/`
+- Backend tied to RealPage
+
+**What to look for:**
+- Enterprise feel
+- Heavier, data-driven UI
+
+---
+
 # Detection Tips
 
 ## How to identify a PMS on any site
@@ -212,3 +356,17 @@ https://debonairesuites.holidayfuture.com/
 | Template feel | Lodgify, Smoobu | Faster, cheaper, less unique |
 | Embedded PMS | Hostaway, Guesty | Flexible design, better branding |
 | Custom frontend | Track, Uplisting | Best for scaling + conversions |
+
+## Visibility patterns
+
+**Visible PMS (easy to detect in URL):**
+- Beds24, ResNexus, RMS Cloud, Little Hotelier — often expose their booking engine in the URL
+
+**Invisible PMS (hard to detect):**
+- BookingSync, iGMS, Track — power custom sites behind the scenes; no URL signature
+
+**Regional leaders:**
+- Avantio → Europe
+- eZee Absolute → Asia / Middle East
+- RMS Cloud → resorts / RV parks
+- GuestPoint → Australia
