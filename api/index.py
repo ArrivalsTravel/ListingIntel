@@ -65,6 +65,13 @@ PMS_PLATFORMS = [
     {"name": "Zeevou",          "patterns": ["zeevou.com"]},
     {"name": "MyVR",            "patterns": ["myvr.com"]},
     {"name": "RentalWise",      "patterns": ["rentalwise.com"]},
+    {"name": "HolidayFuture",   "patterns": ["holidayfuture.com"]},
+    {"name": "BookingWithEase", "patterns": ["bookingwithease.com"]},
+    {"name": "Escapia",         "patterns": ["escapia.com"]},
+    {"name": "Ciirus",          "patterns": ["ciirus.com"]},
+    {"name": "Rezkit",          "patterns": ["rezkit.com"]},
+    {"name": "Rentlio",         "patterns": ["rentlio.com"]},
+    {"name": "iCal (generic)",  "patterns": [".ical.ics"]},
     # OTAs — tracked but contact info not scraped
     {"name": "VRBO",            "patterns": ["vrbo.com", "homeaway.com"]},
     {"name": "Booking.com",     "patterns": ["booking.com"]},
@@ -82,6 +89,20 @@ SKIP_DOMAINS = {
     "google.com", "facebook.com", "instagram.com",
     "twitter.com", "x.com", "youtube.com", "pinterest.com",
     "reddit.com", "yelp.com", "linkedin.com", "tiktok.com",
+    # Real estate aggregators — almost always false positives
+    "redfin.com", "realtor.com", "zillow.com", "trulia.com",
+    "homes.com", "point2homes.com", "remax.com", "century21.com",
+    "coldwellbanker.com", "compass.com", "movoto.com",
+    # E-commerce / retail noise (furniture, decor, appliances that match image)
+    "amazon.com", "amazon.ca", "wayfair.com", "ikea.com",
+    "homedepot.com", "lowes.com", "ebay.com", "etsy.com",
+    "walmart.com", "target.com", "alibaba.com", "aliexpress.com",
+    "electricfireplacesdepot.com", "ignisproducts.com", "marxfireplaces.com",
+    # Error tracking / analytics noise
+    "sentry.io", "sentry.wixpress.com", "wixpress.com", "wix.com",
+    "googleapis.com", "gstatic.com", "cloudflare.com",
+    # Image hosts
+    "imgur.com", "flickr.com", "500px.com", "unsplash.com",
 }
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -94,7 +115,34 @@ _PHONE_RE = re.compile(
 _JUNK_DOMAINS = {
     "example.com", "domain.com", "email.com", "test.com",
     "yoursite.com", "yourdomain.com", "sentry.io", "wixpress.com",
-    "schema.org", "w3.org",
+    "sentry.wixpress.com", "schema.org", "w3.org",
+    # Amazon / AWS service emails
+    "amazon.com", "amazonaws.com", "amazonses.com",
+    # Real estate aggregator emails
+    "redfin.com", "realtor.com", "zillow.com", "remax.com",
+    "compass.com", "century21.com", "coldwellbanker.com",
+    # Furniture / appliance retailers
+    "electricfireplacesdepot.com", "ignisproducts.com", "marxfireplaces.com",
+    "wayfair.com", "ikea.com", "homedepot.com", "lowes.com",
+    # Email service noise
+    "sendgrid.net", "mailchimp.com", "mailgun.org", "postmark.com",
+    # OTA / aggregator emails (not the host)
+    "avantstay.com", "vacasa.com", "evolvevacationrental.com",
+    "booking.com", "airbnb.com", "vrbo.com", "expedia.com",
+}
+
+# Common webmail providers — accepted even when they don't match page domain,
+# but only if the email isn't already a "noreply"/"support" style
+_WEBMAIL_DOMAINS = {
+    "gmail.com", "yahoo.com", "hotmail.com", "outlook.com",
+    "icloud.com", "me.com", "live.com", "aol.com", "protonmail.com",
+    "proton.me", "yahoo.ca", "hotmail.ca",
+}
+
+# Suspicious email local-parts that indicate junk/service accounts
+_JUNK_LOCAL_PARTS = {
+    "noreply", "no-reply", "donotreply", "do-not-reply", "admin",
+    "webmaster", "postmaster", "api-services-support", "aws-support",
 }
 
 
@@ -107,19 +155,85 @@ def detect_platform(url: str):
     return None
 
 
-def clean_emails(raw):
+def clean_emails(raw, page_domain: str = ""):
+    """
+    Filter emails aggressively to remove false positives.
+
+    Rules:
+      1. Drop unicode-escape artifacts (u003e, \\u003c, etc.)
+      2. Drop long hex strings (Sentry IDs, tracking beacons)
+      3. Drop known junk domains (retailers, aggregators, error tracking)
+      4. Drop junk local parts (noreply, api-services-support, etc.)
+      5. Keep only emails that EITHER:
+         - match the page's own domain (strong signal host owns it), OR
+         - use a major webmail provider (gmail, outlook, etc.) — these are
+           usually real contact emails hosts publish
+    """
     out = []
+    page_root = _root_domain(page_domain)
+
     for e in raw:
-        e = e.strip()
-        if len(e) > 80:
+        e = e.strip().lower()
+
+        # Length check
+        if len(e) > 80 or len(e) < 6:
             continue
-        domain = e.split("@")[-1].lower()
+
+        # Filter unicode-escape artifacts like "u003esales@..."
+        if re.match(r"^u00[0-9a-f]{2}", e):
+            continue
+        if "\\u" in e or "u003" in e.split("@")[0]:
+            continue
+
+        # Filter out emails with obviously-invalid characters
+        if re.search(r"[^a-z0-9._%+\-@]", e):
+            continue
+
+        local, _, domain = e.partition("@")
+
+        # Filter long hex strings (Sentry event IDs, tracking beacons)
+        if len(local) >= 24 and re.fullmatch(r"[a-f0-9]+", local):
+            continue
+
+        # Filter asset file extensions
+        if re.search(r"\.(png|jpg|jpeg|gif|svg|webp|css|js|woff2?)$", e, re.I):
+            continue
+
+        # Domain blocklist
         if domain in _JUNK_DOMAINS:
             continue
-        if re.search(r"\.(png|jpg|jpeg|gif|svg|webp|css|js)$", e, re.I):
+        # Subdomain check against junk domains (e.g., *.sentry.io)
+        if any(domain.endswith("." + jd) for jd in _JUNK_DOMAINS):
             continue
+
+        # Junk local parts
+        if local in _JUNK_LOCAL_PARTS:
+            continue
+
+        # Domain-match OR webmail requirement — the core filter that kills
+        # cross-site noise (Amazon support scripts, third-party trackers)
+        root = _root_domain(domain)
+        is_page_match = page_root and (root == page_root)
+        is_webmail = domain in _WEBMAIL_DOMAINS
+        if not (is_page_match or is_webmail):
+            continue
+
         out.append(e)
-    return list(dict.fromkeys(out))
+
+    return list(dict.fromkeys(out))[:3]  # max 3 per page
+
+
+def _root_domain(host: str) -> str:
+    """Return the registrable root domain for comparison (example.co.uk → co.uk
+    isn't perfect, but good enough: drops the leftmost subdomain)."""
+    if not host:
+        return ""
+    host = host.lower().lstrip("www.")
+    parts = host.split(".")
+    if len(parts) <= 2:
+        return host
+    # crude — keep last 2 labels, good enough for our purpose
+    return ".".join(parts[-2:])
 
 
 def clean_phones(raw):
@@ -131,17 +245,39 @@ def clean_phones(raw):
     return list(dict.fromkeys(out))[:8]
 
 
+def _decode_unicode_escapes(s: str) -> str:
+    """Decode JSON-style \\u003e escapes and HTML entities so regex matching
+    works on the actual text. Fixes the 'u003esales@...' bug."""
+    if not s:
+        return s
+    # JSON unicode escapes (common in Next.js / JSON-LD blobs)
+    try:
+        s = re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), s)
+    except Exception:
+        pass
+    # HTML entities (&amp; &gt; etc.)
+    try:
+        import html as _html
+        s = _html.unescape(s)
+    except Exception:
+        pass
+    return s
+
+
 def scrape_contact(url: str) -> dict:
     result = {"emails": [], "phones": [], "title": "", "error": None}
     parsed = urlparse(url)
     base = f"{parsed.scheme}://{parsed.netloc}"
+    page_domain = parsed.netloc
 
     def fetch(target):
         try:
             r = requests.get(target, headers=HEADERS, timeout=REQUEST_TIMEOUT, allow_redirects=True)
             if r.status_code == 200:
-                soup = BeautifulSoup(r.text, "html.parser")
-                return soup, r.text, soup.get_text(" ")
+                # Decode unicode escapes BEFORE parsing / regex
+                html_decoded = _decode_unicode_escapes(r.text)
+                soup = BeautifulSoup(html_decoded, "html.parser")
+                return soup, html_decoded, soup.get_text(" ")
         except Exception:
             pass
         return None, None, None
@@ -153,10 +289,10 @@ def scrape_contact(url: str) -> dict:
 
     result["title"] = soup.title.string.strip() if soup.title and soup.title.string else ""
 
-    emails = clean_emails(set(_EMAIL_RE.findall(html)))
+    emails = clean_emails(set(_EMAIL_RE.findall(html)), page_domain=page_domain)
     phones = clean_phones(_PHONE_RE.findall(text))
 
-    # Schema.org structured data
+    # Schema.org structured data (trusted source — bypass domain match)
     for script in soup.find_all("script", type="application/ld+json"):
         try:
             data = json.loads(script.string or "{}")
@@ -164,7 +300,7 @@ def scrape_contact(url: str) -> dict:
                 if "telephone" in data:
                     phones.append(str(data["telephone"]))
                 if "email" in data:
-                    emails.append(str(data["email"]))
+                    emails.append(str(data["email"]).lower())
         except Exception:
             pass
 
@@ -173,14 +309,15 @@ def scrape_contact(url: str) -> dict:
         for subpath in ["/contact", "/contact-us", "/about"]:
             _, s_html, s_text = fetch(base + subpath)
             if s_html:
-                e2 = clean_emails(set(_EMAIL_RE.findall(s_html)))
+                e2 = clean_emails(set(_EMAIL_RE.findall(s_html)), page_domain=page_domain)
                 p2 = clean_phones(_PHONE_RE.findall(s_text))
                 emails += e2
                 phones += p2
                 if emails or phones:
                     break
 
-    result["emails"] = clean_emails(set(emails))
+    # Final clean on the combined list, with domain match enforced
+    result["emails"] = clean_emails(set(emails), page_domain=page_domain)
     result["phones"] = clean_phones(phones)
     return result
 
@@ -219,6 +356,9 @@ def get_hero_image_from_airbnb(airbnb_url: str):
 # ── Reverse Image Search ──────────────────────────────────────────────────────
 
 def search_serpapi(image_url: str) -> list:
+    """Call SerpApi Google Lens. Tag each result with its match type so we can
+    prefer exact matches (higher confidence the image is the same property)
+    over visual matches (could be any visually-similar photo)."""
     if not SERPAPI_KEY:
         return []
     try:
@@ -229,9 +369,21 @@ def search_serpapi(image_url: str) -> list:
         )
         data = r.json()
         results = []
-        for item in data.get("visual_matches", []) + data.get("exact_matches", []):
+        # Exact matches first — these are highest confidence
+        for item in data.get("exact_matches", []):
             if item.get("link"):
-                results.append({"url": item["link"], "title": item.get("title", "")})
+                results.append({
+                    "url": item["link"],
+                    "title": item.get("title", ""),
+                    "match_type": "exact",
+                })
+        for item in data.get("visual_matches", []):
+            if item.get("link"):
+                results.append({
+                    "url": item["link"],
+                    "title": item.get("title", ""),
+                    "match_type": "visual",
+                })
         return results
     except Exception:
         return []
@@ -294,29 +446,57 @@ def run_pipeline(image_url: str, is_demo: bool = False) -> dict:
         seen.add(domain)
         if any(s in domain for s in SKIP_DOMAINS):
             continue
+        # Also skip if any parent domain is blocklisted
+        root = _root_domain(domain)
+        if root in SKIP_DOMAINS:
+            continue
 
-        platform = detect_platform(url)
-        is_direct = platform not in OTA_NAMES if platform else True
+        platform    = detect_platform(url)
+        is_ota      = platform in OTA_NAMES if platform else False
+        match_type  = item.get("match_type", "unknown")
+
+        # A page is "direct" (contributes to host contact summary) if:
+        #   - It's a known PMS platform (not OTA), OR
+        #   - It's an EXACT image match from SerpApi (same image = very likely
+        #     the same property, even if we don't recognize the platform)
+        is_direct   = (not is_ota) and (platform is not None or match_type == "exact")
+
+        # Scrape only pages we have strong signal for:
+        #   - A known PMS platform match (Lodgify, Hostaway, etc.), OR
+        #   - An EXACT image match from SerpApi (same image, not just similar), OR
+        #   - Demo mode
+        #
+        # This kills the biggest noise source: visually-similar photos on
+        # furniture sites, realtor aggregators, and unrelated listings.
+        should_scrape = (
+            is_demo
+            or (platform is not None and not is_ota)
+            or match_type == "exact"
+        )
 
         match = {
             "url": url,
             "domain": domain,
             "platform": platform,
             "is_direct": is_direct,
-            "is_ota": platform in OTA_NAMES if platform else False,
+            "is_ota": is_ota,
+            "match_type": match_type,
             "emails": [],
             "phones": [],
             "title": item.get("title", ""),
             "error": None,
         }
 
-        # Only scrape direct / unknown pages (skip OTAs)
-        if not match["is_ota"]:
+        if should_scrape:
             contact = scrape_contact(url)
             match["emails"]  = contact["emails"]
             match["phones"]  = contact["phones"]
             match["title"]   = contact["title"] or match["title"]
             match["error"]   = contact["error"]
+
+            # Only feed the top-level summary with emails from HIGH-CONFIDENCE
+            # sources: a known PMS direct-booking platform. This keeps the
+            # summary banner clean and relevant.
             if is_direct:
                 all_emails.extend(contact["emails"])
                 all_phones.extend(contact["phones"])
@@ -324,17 +504,21 @@ def run_pipeline(image_url: str, is_demo: bool = False) -> dict:
 
         matches.append(match)
 
+    # Deduplicate and cap summary
+    summary_emails = list(dict.fromkeys(all_emails))[:10]
+    summary_phones = list(dict.fromkeys(all_phones))[:10]
+
     return {
         "image_url": image_url,
         "timestamp": datetime.now().isoformat(),
         "is_demo": is_demo,
         "summary": {
             "total": len(matches),
-            "direct": sum(1 for m in matches if m["is_direct"] and m["platform"] and not m["is_ota"]),
+            "direct": sum(1 for m in matches if m["is_direct"]),
             "ota": sum(1 for m in matches if m["is_ota"]),
             "unknown": sum(1 for m in matches if not m["platform"]),
-            "emails": list(dict.fromkeys(all_emails)),
-            "phones": list(dict.fromkeys(all_phones)),
+            "emails": summary_emails,
+            "phones": summary_phones,
         },
         "matches": matches,
     }
