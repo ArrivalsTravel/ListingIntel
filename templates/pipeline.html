@@ -1,0 +1,234 @@
+/* templates.pipeline.html */
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pipeline</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond&family=Inter&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/site.css?v=2" />
+</head>
+<body>
+
+<div class="page">
+
+  <div class="topbar">
+    <input id="listing-url" placeholder="Listing URL (Airbnb, VRBO, etc.)" />
+    <input id="image-url" placeholder="Image URL" />
+    <button onclick="runSearch()">Run</button>
+    <button class="secondary" onclick="runDemo()">Demo</button>
+  </div>
+
+  <div id="error-box" class="error"></div>
+
+  <div class="board">
+
+    <!-- STEP 1 -->
+    <div class="panel">
+      <div class="eyebrow">Step 1</div>
+      <h2>Input</h2>
+      <div id="input-status" class="status">Waiting</div>
+
+      <div id="image-box" class="image-box">
+        <div class="empty">No image</div>
+      </div>
+
+      <div id="input-meta" class="meta"></div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="panel">
+      <div class="eyebrow">Step 2</div>
+      <h2>Matches</h2>
+      <div id="search-status" class="status">Waiting</div>
+
+      <div class="scroll">
+        <div id="match-grid" class="match-grid"></div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="panel">
+      <div class="eyebrow">Step 3</div>
+      <h2>Classify</h2>
+      <div id="classify-summary" class="status">Waiting</div>
+      <div class="scroll">
+        <div id="classify-panel"></div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="panel">
+      <div class="eyebrow">Step 4</div>
+      <h2>Contacts</h2>
+      <div id="contact-summary" class="status">Waiting</div>
+      <div class="scroll">
+        <div id="contact-panel"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API = "/api";
+
+function esc(s) {
+  return String(s || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+
+function setError(msg) {
+  document.getElementById("error-box").textContent = msg || "";
+}
+
+function renderInput(p) {
+  document.getElementById("input-status").textContent = p.metadata.input_mode;
+
+  const box = document.getElementById("image-box");
+  if (p.active_image_url && p.active_image_url !== "demo") {
+    box.innerHTML = `<img src="${p.active_image_url}">`;
+  }
+
+  document.getElementById("input-meta").innerHTML = `
+    <div class="k">source</div><div>${esc(p.listing_source)}</div>
+    <div class="k">listing</div><div>${esc(p.submitted_listing_url)}</div>
+    <div class="k">image</div><div>${esc(p.submitted_image_url)}</div>
+    <div class="k">name</div><div>${esc(p.metadata?.name)}</div>
+    <div class="k">city</div><div>${esc(p.metadata?.city)}</div>
+    <div class="k">room id</div><div>${esc(p.metadata?.room_id)}</div>
+    <div class="k">images</div><div>${esc(p.metadata?.image_candidate_count)}</div>
+  `;
+}
+
+function renderMatches(p) {
+  document.getElementById("search-status").textContent =
+    `${p.provider} (${p.raw_match_count})`;
+
+  const grid = document.getElementById("match-grid");
+
+  grid.innerHTML = p.matches.map(m => `
+    <div class="match-card">
+      <div class="thumb">
+        <img src="${m.thumbnail_url || `https://www.google.com/s2/favicons?domain=${m.domain}`}" />
+      </div>
+      <div>
+        <div class="domain">${esc(m.domain)}</div>
+        <div class="title">${esc(m.title)}</div>
+        <div class="badge-row">
+          <span class="badge">${m.match_type}</span>
+          <span class="badge">rank ${m.rank ?? "-"}</span>
+          <span class="badge">d ${m.score1 ?? "-"}</span>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderClassification(p) {
+  document.getElementById("classify-summary").textContent =
+    `direct ${p.direct.length} · ota ${p.ota.length} · unknown ${p.unknown.length} · hidden ${p.hidden.length}`;
+
+  document.getElementById("classify-panel").innerHTML = `
+    <div class="badge-row" style="margin-bottom:10px;">
+      <span class="badge">direct ${p.direct.length}</span>
+      <span class="badge">ota ${p.ota.length}</span>
+      <span class="badge">unknown ${p.unknown.length}</span>
+      <span class="badge">hidden ${p.hidden.length}</span>
+    </div>
+  `;
+}
+
+
+function renderContacts(p) {
+  document.getElementById("contact-summary").textContent =
+    `${p.records.length} checked`;
+
+  document.getElementById("contact-panel").innerHTML = p.records.map(r => `
+    <div class="match-card" style="margin-bottom:10px;">
+      <div class="thumb"></div>
+      <div>
+        <div class="domain">${esc(r.domain)}</div>
+        <div class="title">${esc(r.title || "")}</div>
+        <div class="badge-row">
+          <span class="badge">${esc(r.source_bucket || "-")}</span>
+          <span class="badge">${esc(r.source_quality || "-")}</span>
+          <span class="badge">rank ${r.rank ?? "-"}</span>
+          <span class="badge">d ${r.score1 ?? "-"}</span>
+        </div>
+        <div style="margin-top:8px;font-size:12px;">
+          ${(r.emails || []).map(e => `<div>${esc(e)}</div>`).join("")}
+          ${(r.phones || []).map(ph => `<div>${esc(ph)}</div>`).join("")}
+          ${!((r.emails || []).length || (r.phones || []).length) ? `<div class="pending">No contact found</div>` : ``}
+          ${r.error ? `<div class="error">${esc(r.error)}</div>` : ``}
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function extract(body) {
+  const r = await fetch(API + "/pipeline/extract", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(body)
+  });
+  return await r.json();
+}
+
+async function search(body) {
+  const r = await fetch(API + "/pipeline/search", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(body)
+  });
+  return await r.json();
+}
+
+
+async function run(body) {
+  setError("");
+
+  const extracted = await extract(body);
+  if (!extracted.ok) {
+    setError(extracted.error);
+    return;
+  }
+  renderInput(extracted.input_panel);
+
+  const searchBody = {
+    ...body,
+    selected_image_url: extracted.input_panel.active_image_url
+  };
+  const searched = await search(searchBody);
+  if (!searched.ok) {
+    setError(searched.error);
+    return;
+  }
+  renderMatches(searched.match_discovery);
+  renderClassification(searched.classification);
+  renderContacts(searched.contact);
+}
+
+
+function runSearch() {
+  run({
+    listing_url: document.getElementById("listing-url").value,
+    image_url: document.getElementById("image-url").value,
+  });
+}
+
+function runDemo() {
+  run({ demo: true });
+}
+</script>
+
+</body>
+</html>
