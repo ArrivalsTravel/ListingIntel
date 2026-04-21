@@ -73,6 +73,7 @@ def pipeline_extract():
             "notes": [],
             "name": extract_result["metadata"].get("name"),
             "city": extract_result["metadata"].get("city"),
+            "address": extract_result["metadata"].get("address"),
             "room_id": extract_result.get("room_id"),
             "image_candidate_count": len(extract_result.get("image_candidates", [])),
         },
@@ -107,6 +108,7 @@ def pipeline_search():
             "notes": [],
             "name": extract_result["metadata"].get("name"),
             "city": extract_result["metadata"].get("city"),
+            "address": extract_result["metadata"].get("address"),
             "room_id": extract_result.get("room_id"),
             "image_candidate_count": len(extract_result.get("image_candidates", [])),
         },
@@ -114,7 +116,8 @@ def pipeline_search():
 
     search_result = run_image_search(active_image_url or "", is_demo=req.demo)
     classified = classify_matches(search_result["matches"], property_name=extract_result["metadata"].get("name"))
-    contact_result = scrape_candidates( classified["direct"], classified["unknown"])
+    contact_result = scrape_candidates(classified["direct"], classified["unknown"], base_address=extract_result["metadata"].get("address"))
+
 
     def build_match_records(items):
         return [
@@ -138,6 +141,7 @@ def pipeline_search():
                 domain=item["domain"],
                 emails=item.get("emails", []),
                 phones=item.get("phones", []),
+                address=item.get("address"),
                 title=item.get("title", ""),
                 error=item.get("error"),
                 source_bucket=item.get("source_bucket"),
@@ -177,6 +181,89 @@ def root():
 @app.get("/pipeline.html")
 def pipeline_page():
     return render_template("pipeline.html")
+
+## compatibility for index.html here:
+
+@app.get("/index.html")
+def index_page():
+    return send_from_directory(BASE_DIR / "public", "index.html")
+
+
+@app.post("/api/search")
+def legacy_search():
+    payload = request.get_json(silent=True) or {}
+    req = _parse_request({
+        "listing_url": payload.get("airbnb_url"),
+        "image_url": payload.get("image_url"),
+        "demo": payload.get("demo", False),
+    })
+
+    extract_result = resolve_input(
+        image_url=req.image_url,
+        listing_url=req.listing_url,
+        selected_image_url=req.selected_image_url,
+    )
+    active_image_url = extract_result["hero_image_url"]
+
+    if not req.demo and not active_image_url:
+        err = ErrorPayload(error=extract_result["error"] or "Could not resolve an image.")
+        return jsonify(asdict(err)), 400
+
+    search_result = run_image_search(active_image_url or "", is_demo=req.demo)
+    classified = classify_matches(
+        search_result["matches"],
+        property_name=extract_result["metadata"].get("name"),
+    )
+    contact_result = scrape_candidates(classified["direct"], classified["unknown"])
+
+    contact_by_url = {r["url"]: r for r in contact_result["records"]}
+    matches = []
+
+    for item in search_result["matches"]:
+        c = contact_by_url.get(item["url"], {})
+        platform = item.get("platform")
+        is_ota = item.get("is_ota", False)
+
+        if not platform:
+            # recover platform from classified buckets if present
+            for bucket in ("direct", "ota", "unknown", "hidden"):
+                hit = next((x for x in classified[bucket] if x["url"] == item["url"]), None)
+                if hit:
+                    platform = hit.get("platform")
+                    is_ota = hit.get("is_ota", False)
+                    break
+
+        matches.append({
+            "url": item["url"],
+            "domain": item["domain"],
+            "platform": platform,
+            "is_ota": is_ota,
+            "title": c.get("title") or item.get("title", ""),
+            "emails": c.get("emails", []),
+            "phones": c.get("phones", []),
+        })
+
+    summary_emails = []
+    summary_phones = []
+    for r in contact_result["records"]:
+        summary_emails.extend(r.get("emails", []))
+        summary_phones.extend(r.get("phones", []))
+
+    return jsonify({
+        "image_url": active_image_url,
+        "is_demo": req.demo,
+        "summary": {
+            "total": len(matches),
+            "direct": len(classified["direct"]),
+            "ota": len(classified["ota"]),
+            "unknown": len(classified["unknown"]),
+            "hidden_noise": len(classified["hidden"]),
+            "emails": list(dict.fromkeys(summary_emails))[:10],
+            "phones": list(dict.fromkeys(summary_phones))[:10],
+        },
+        "matches": matches,
+    })
+
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5001, debug=True)

@@ -29,10 +29,29 @@ body {
 }
 
 .topbar {
-  display: grid;
-  grid-template-columns: 1.3fr 0.7fr auto auto;
-  gap: 12px;
-  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.topbar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  letter-spacing: 0.5px;
+  color: var(--orange);
+  margin-right: 16px;
+  white-space: nowrap;
 }
 
 input, select, button {
@@ -103,7 +122,10 @@ button.secondary {
 }
 
 .meta .k { color: var(--muted); }
-.meta .v { word-break: break-word; }
+.meta .v {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
 
 .image-box {
   width: 100%;

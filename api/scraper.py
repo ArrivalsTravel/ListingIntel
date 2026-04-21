@@ -22,6 +22,9 @@ _PHONE_RE = re.compile(
     r"(?:\+?1[\s.\-]?)?(?:\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}"
     r"|\+\d{1,3}[\s.\-]?(?:\(?\d{1,4}\)?[\s.\-])?\d{1,4}[\s.\-]\d{1,9})"
 )
+_ADDRESS_RE = re.compile(
+    r"\b\d{1,6}\s+[A-Za-z0-9.'#\- ]+\s(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Drive|Dr|Court|Ct|Boulevard|Blvd|Way|Place|Pl|Terrace|Ter)\b",
+    re.I)
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -82,14 +85,32 @@ def clean_emails(raw, page_domain: str = ""):
 
     return list(dict.fromkeys(out))[:3]
 
-
 def clean_phones(raw):
     out = []
     for p in raw:
         digits = re.sub(r"\D", "", p)
-        if 10 <= len(digits) <= 15:
-            out.append(p.strip())
+        # enforce NANP lengths
+        if len(digits) == 11 and digits.startswith("1"):
+            n = digits[1:]
+        elif len(digits) == 10:
+            n = digits
+        else:
+            continue
+        # basic plausibility (filters your junk)
+        area = n[:3]
+        exch = n[3:6]
+        if area[0] in "01" or exch[0] in "01":
+            continue
+        out.append(f"+1{n}")
     return list(dict.fromkeys(out))[:8]
+
+def clean_addresses(raw):
+    out = []
+    for a in raw:
+        a = re.sub(r"\s+", " ", a).strip(" ,")
+        if len(a) >= 10:
+            out.append(a)
+    return list(dict.fromkeys(out))[:3]
 
 
 def _decode_unicode_escapes(s: str) -> str:
@@ -108,7 +129,7 @@ def _decode_unicode_escapes(s: str) -> str:
 
 
 def scrape_contact(url: str) -> dict:
-    result = {"emails": [], "phones": [], "title": "", "error": None}
+    result = {"emails": [], "phones": [], "title": "","address":None, "error": None}
     parsed = urlparse(url)
     base = f"{parsed.scheme}://{parsed.netloc}"
     page_domain = parsed.netloc
@@ -133,6 +154,7 @@ def scrape_contact(url: str) -> dict:
 
     emails = clean_emails(set(_EMAIL_RE.findall(html)), page_domain=page_domain)
     phones = clean_phones(_PHONE_RE.findall(text))
+    addresses = clean_addresses(_ADDRESS_RE.findall(text))
 
     for script in soup.find_all("script", type="application/ld+json"):
         try:
@@ -156,4 +178,5 @@ def scrape_contact(url: str) -> dict:
 
     result["emails"] = clean_emails(set(emails), page_domain=page_domain)
     result["phones"] = clean_phones(phones)
+    result["address"] = clean_addresses(addresses)[0] if addresses else None
     return result

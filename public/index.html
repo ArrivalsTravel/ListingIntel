@@ -58,23 +58,21 @@
 
 <script>
   /* const API = '/api'; */
-  const API = 'http://127.0.0.1:5000/api';
+  const API = 'http://127.0.0.1:5001/api';
 
   async function checkHealth() {
     try {
       const r = await fetch(`${API}/health`);
       const d = await r.json();
-      const serpOk = d.serpapi, visOk = d.vision, anyOk = serpOk || visOk;
-      document.getElementById('api-status').innerHTML = `
-        <span class="status-dot ${serpOk ? 'dot-green' : 'dot-red'}"></span>SerpApi ${serpOk ? 'connected' : 'not configured'}
-        &nbsp;&nbsp;
-        <span class="status-dot ${visOk ? 'dot-green' : 'dot-red'}"></span>Google Vision ${visOk ? 'connected' : 'not configured'}
-        ${!anyOk ? `<br><span style="color:var(--orange)">Add <code>SERPAPI_KEY</code> in <a href="https://vercel.com/dashboard" target="_blank">Vercel settings</a> to enable live searches.</span>` : ''}
-      `;
+      document.getElementById('api-status').textContent =
+        d.ok ? 'API connected' : 'API unavailable';
     } catch(e) {
       document.getElementById('api-status').textContent = 'Could not reach API';
     }
   }
+
+    
+
   checkHealth();
 
   document.getElementById('url-input').addEventListener('keydown', e => {

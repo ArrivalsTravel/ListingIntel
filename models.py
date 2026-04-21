@@ -56,6 +56,7 @@ class ContactRecord:
     domain: str
     emails: List[str] = field(default_factory=list)
     phones: List[str] = field(default_factory=list)
+    address: Optional[str] = None
     title: str = ""
     error: Optional[str] = None
     source_bucket: Optional[str] = None
