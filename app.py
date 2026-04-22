@@ -29,7 +29,6 @@ def _parse_request(payload: dict) -> PipelineRequest:
         listing_url=(payload.get("listing_url") or "").strip() or None,
         listing_source=(payload.get("listing_source") or "unknown").strip(),
         selected_image_url=(payload.get("selected_image_url") or "").strip() or None,
-        demo=bool(payload.get("demo", False)),
     )
 
 
@@ -93,7 +92,7 @@ def pipeline_search():
     active_image_url = extract_result["hero_image_url"]
     print(f"Starting search for {active_image_url}")
 
-    if not req.demo and not active_image_url:
+    if not active_image_url:
         err = ErrorPayload(error=extract_result["error"] or "Could not resolve an image.")
         return jsonify(asdict(err)), 400
     input_panel = InputPanel(
@@ -101,9 +100,9 @@ def pipeline_search():
         listing_source=extract_result["listing_source"],
         submitted_image_url=req.image_url,
         selected_image_url=req.selected_image_url,
-        active_image_url=active_image_url if not req.demo else "demo",
+        active_image_url=active_image_url,
         metadata={
-            "input_mode": "demo" if req.demo else ("listing_url" if req.listing_url else "image_url"),
+            "input_mode": "listing_url" if req.listing_url else "image_url",
             "extractor_status": extract_result["status"],
             "notes": [],
             "name": extract_result["metadata"].get("name"),
@@ -114,11 +113,12 @@ def pipeline_search():
         },
     )
 
-    search_result = run_image_search(active_image_url or "", is_demo=req.demo)
+    search_result = run_image_search(active_image_url or "")
     classified = classify_matches(search_result["matches"], property_name=extract_result["metadata"].get("name"))
     contact_result = scrape_candidates(classified["direct"], classified["unknown"], base_address=extract_result["metadata"].get("address"))
 
 
+        
     def build_match_records(items):
         return [
             MatchRecord(
@@ -130,9 +130,13 @@ def pipeline_search():
                 thumbnail_url=item.get("thumbnail_url"),
                 rank=item.get("rank", 0),
                 score1=item.get("score1"),
+                listing_id=item.get("listing_id"),
+                platform=item.get("platform"),
+                hidden_reason=item.get("hidden_reason"),
             )
             for item in items
-        ]
+        ]    
+        
         
     def build_contact_records(items):
         return [
@@ -182,6 +186,12 @@ def root():
 def pipeline_page():
     return render_template("pipeline.html")
 
+@app.get("/bulk.html")
+def bulk_page():
+    return render_template("bulk.html")
+
+
+
 ## compatibility for index.html here:
 
 @app.get("/index.html")
@@ -195,7 +205,6 @@ def legacy_search():
     req = _parse_request({
         "listing_url": payload.get("airbnb_url"),
         "image_url": payload.get("image_url"),
-        "demo": payload.get("demo", False),
     })
 
     extract_result = resolve_input(
@@ -205,11 +214,11 @@ def legacy_search():
     )
     active_image_url = extract_result["hero_image_url"]
 
-    if not req.demo and not active_image_url:
+    if not active_image_url:
         err = ErrorPayload(error=extract_result["error"] or "Could not resolve an image.")
         return jsonify(asdict(err)), 400
 
-    search_result = run_image_search(active_image_url or "", is_demo=req.demo)
+    search_result = run_image_search(active_image_url or "")
     classified = classify_matches(
         search_result["matches"],
         property_name=extract_result["metadata"].get("name"),
@@ -251,7 +260,6 @@ def legacy_search():
 
     return jsonify({
         "image_url": active_image_url,
-        "is_demo": req.demo,
         "summary": {
             "total": len(matches),
             "direct": len(classified["direct"]),

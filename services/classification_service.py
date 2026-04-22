@@ -1,12 +1,12 @@
 # services/classification_service.py
 
-import json
+import json, re
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-REF_PATH = BASE_DIR / "api" / "reference_data.json"
+REF_PATH = BASE_DIR / "reference_data.json"
 
 with open(REF_PATH, "r", encoding="utf-8") as f:
     REF = json.load(f)
@@ -29,6 +29,41 @@ def _detect_platform(url: str) -> str | None:
             if pat in lower:
                 return p["name"]
     return None
+
+def _extract_listing_id(url: str, platform: str | None) -> str | None:
+    if not url or not platform:
+        return None
+
+    lower = url.lower()
+
+    if platform == "Airbnb":
+        m = re.search(r"/rooms/(\d+)", lower)
+        return m.group(1) if m else None
+
+    if platform == "VRBO":
+        m = re.search(r"/(?:vacation-rental|en-ca/cottage-rental|en-gb/p\d+|p)(?:/p)?(\d+)", lower)
+        if m:
+            return m.group(1)
+        m = re.search(r"[?&]propertyid=(\d+)", lower)
+        return m.group(1) if m else None
+
+    if platform == "Booking.com":
+        m = re.search(r"/hotel/[^/]+/[^/.]+\.html", lower)
+        if m:
+            slug = m.group(0).split("/")[-1].replace(".html", "")
+            return slug or None
+        return None
+
+    if platform == "Expedia":
+        m = re.search(r"/(?:hotel|vacation-rental)/[^?]*/?(\d+)", lower)
+        return m.group(1) if m else None
+
+    if platform == "TripAdvisor":
+        m = re.search(r"-d(\d+)-", lower)
+        return m.group(1) if m else None
+
+    return None
+
 
 
 def _is_skip_domain(domain: str) -> bool:
@@ -60,12 +95,14 @@ def _classify_match(match: dict, property_name: str | None = None) -> tuple[str,
     domain = match.get("domain") or _domain(url)
     platform = match.get("platform") or _detect_platform(url)
     is_ota = platform in OTA_NAMES if platform else False
+    listing_id = _extract_listing_id(url, platform)
 
     item = {
         **match,
         "domain": domain,
         "platform": platform,
         "is_ota": is_ota,
+        "listing_id": listing_id,
         "is_direct_candidate": False,
         "hidden_reason": None,
     }

@@ -122,7 +122,12 @@ button.secondary {
 }
 
 .meta .k { color: var(--muted); }
-.meta .v {
+
+.meta > div {
+  min-width: 0;
+}
+
+.meta > div:nth-child(even) {
   word-break: break-word;
   overflow-wrap: anywhere;
 }
@@ -184,7 +189,10 @@ button.secondary {
   height: 100%;
   object-fit: cover;
 }
-
+.match-card {
+  text-decoration: none;
+  color: inherit;
+}
 .domain {
   font-size: 13px;
   color: var(--white);
@@ -226,6 +234,50 @@ button.secondary {
   margin-top: 12px;
   color: var(--orange);
   font-size: 13px;
+}
+
+.classify-section {
+  margin-bottom: 16px;
+}
+
+.classify-head {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  margin-bottom: 8px;
+}
+
+.classify-row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.classify-logo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.classify-main {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.classify-meta {
+  font-size: 12px;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.classify-stat {
+  font-size: 28px;
+  line-height: 1;
+  margin-top: 2px;
 }
 
 @media (max-width: 1300px) {

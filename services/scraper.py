@@ -26,7 +26,7 @@ _ADDRESS_RE = re.compile(
     r"\b\d{1,6}\s+[A-Za-z0-9.'#\- ]+\s(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Drive|Dr|Court|Ct|Boulevard|Blvd|Way|Place|Pl|Terrace|Ter)\b",
     re.I)
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 with open(BASE_DIR / "reference_data.json", "r", encoding="utf-8") as f:
     REF = json.load(f)
@@ -44,6 +44,35 @@ def _root_domain(host: str) -> str:
     if len(parts) <= 2:
         return host
     return ".".join(parts[-2:])
+
+def _visible_text(soup: BeautifulSoup) -> str:
+    for tag in soup(["script", "style", "noscript", "svg", "template"]):
+        tag.decompose()
+
+    text = soup.get_text(" ", strip=True)
+    text = re.sub(r"\s+", " ", text)
+    return text
+
+
+def _likely_phone_context(text: str, match_text: str) -> bool:
+    i = text.find(match_text)
+    if i == -1:
+        return False
+
+    window = text[max(0, i - 40): min(len(text), i + len(match_text) + 40)].lower()
+
+    good = (
+        "call", "phone", "tel", "text", "contact",
+        "reservation", "booking", "mobile", "office"
+    )
+    bad = (
+        "woff", "woff2", "ttf", "otf", "font",
+        "padding", "margin", "width", "height",
+        "translate", "rotate", "scale", "matrix",
+        "rgba", "background", "stylesheet"
+    )
+
+    return any(g in window for g in good) and not any(b in window for b in bad)
 
 
 def clean_emails(raw, page_domain: str = ""):
@@ -89,19 +118,20 @@ def clean_phones(raw):
     out = []
     for p in raw:
         digits = re.sub(r"\D", "", p)
-        # enforce NANP lengths
+
         if len(digits) == 11 and digits.startswith("1"):
             n = digits[1:]
         elif len(digits) == 10:
             n = digits
         else:
             continue
-        # basic plausibility (filters your junk)
+
         area = n[:3]
         exch = n[3:6]
-        if area[0] in "01" or exch[0] in "01":
-            continue
+        if area[0] in "01" or exch[0] in "01": continue
+        if n in {"8663933393", "8772024291"}: continue
         out.append(f"+1{n}")
+
     return list(dict.fromkeys(out))[:8]
 
 def clean_addresses(raw):
@@ -140,7 +170,8 @@ def scrape_contact(url: str) -> dict:
             if r.status_code == 200:
                 html_decoded = _decode_unicode_escapes(r.text)
                 soup = BeautifulSoup(html_decoded, "html.parser")
-                return soup, html_decoded, soup.get_text(" ")
+                visible_text = _visible_text(soup)
+                return soup, html_decoded, visible_text
         except Exception:
             pass
         return None, None, None
@@ -153,7 +184,9 @@ def scrape_contact(url: str) -> dict:
     result["title"] = soup.title.string.strip() if soup.title and soup.title.string else ""
 
     emails = clean_emails(set(_EMAIL_RE.findall(html)), page_domain=page_domain)
-    phones = clean_phones(_PHONE_RE.findall(text))
+    raw_phone_hits = _PHONE_RE.findall(text)
+    raw_phone_hits = [p for p in raw_phone_hits if _likely_phone_context(text, p)]
+    phones = clean_phones(raw_phone_hits)
     addresses = clean_addresses(_ADDRESS_RE.findall(text))
 
     for script in soup.find_all("script", type="application/ld+json"):
@@ -172,9 +205,9 @@ def scrape_contact(url: str) -> dict:
             _, s_html, s_text = fetch(base + subpath)
             if s_html:
                 emails += clean_emails(set(_EMAIL_RE.findall(s_html)), page_domain=page_domain)
-                phones += clean_phones(_PHONE_RE.findall(s_text))
-                if emails or phones:
-                    break
+                raw_sub_phones = [p for p in _PHONE_RE.findall(s_text) if _likely_phone_context(s_text, p)]
+                phones += clean_phones(raw_sub_phones)
+                if emails or phones:    break
 
     result["emails"] = clean_emails(set(emails), page_domain=page_domain)
     result["phones"] = clean_phones(phones)

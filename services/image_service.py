@@ -11,8 +11,8 @@ from urllib.parse import urlparse
 SERPAPI_KEY = os.environ.get("SERPAPI_KEY", "")
 GOOGLE_VISION_KEY = os.environ.get("GOOGLE_VISION_KEY", "")
 MATCH = 12
-NEAR_MATCH = 26
-RANK_CUTOFF = 15
+NEAR_MATCH = 24
+RANK_CUTOFF = 14
 REQUEST_TIMEOUT = 25
 
 
@@ -145,9 +145,8 @@ def _dedupe(matches: list[dict]) -> list[dict]:
     return out
 
 
-def run_image_search(image_url: str, is_demo: bool = False) -> dict:
+def run_image_search(image_url: str) -> dict:
     print(f"SERPAPI_KEY present: {bool(SERPAPI_KEY)}")
-    if is_demo: return {"provider": "demo", "matches": []}
     print (f'Image service for {image_url}')
     serp = search_serpapi(image_url)
     if serp:

@@ -10,7 +10,6 @@ class PipelineRequest:
     listing_url: Optional[str] = None
     listing_source: str = "unknown"
     selected_image_url: Optional[str] = None
-    demo: bool = False
 
 
 @dataclass
@@ -23,6 +22,7 @@ class InputPanel:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
+
 @dataclass
 class MatchRecord:
     url: str
@@ -33,7 +33,10 @@ class MatchRecord:
     thumbnail_url: Optional[str] = None
     rank: int = 0
     score1: Optional[int] = None
-
+    listing_id: Optional[str] = None
+    platform: Optional[str] = None
+    hidden_reason: Optional[str] = None
+    
 
 @dataclass
 class MatchDiscoveryPanel:

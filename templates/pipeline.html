@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond&family=Inter&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="/site.css?v=2" />
+  <link rel="stylesheet" href="/site.css?v=3" />
 </head>
 <body>
 
@@ -24,7 +24,7 @@
       <input id="listing-url" placeholder="Listing URL (Airbnb, VRBO, etc.)" />
       <input id="image-url" placeholder="Image URL" />
       <button onclick="runSearch()">Run</button>
-      <button class="secondary" onclick="runDemo()">Demo</button>
+      <button id="export-btn" class="secondary" onclick="exportContactCsv()" disabled>Export Contact CSV</button>
     </div>
   </div>
 
@@ -81,6 +81,8 @@
 
 <script>
 const API = "/api";
+let lastExtracted = null;
+let lastSearched = null;
 
 function esc(s) {
   return String(s || "")
@@ -97,9 +99,7 @@ function renderInput(p) {
   document.getElementById("input-status").textContent = p.metadata.input_mode;
 
   const box = document.getElementById("image-box");
-  if (p.active_image_url && p.active_image_url !== "demo") {
-    box.innerHTML = `<img src="${p.active_image_url}">`;
-  }
+  if (p.active_image_url) {box.innerHTML = `<img src="${p.active_image_url}">`;}
 
   document.getElementById("input-meta").innerHTML = `
     <div class="k">source</div><div>${esc(p.listing_source)}</div>
@@ -120,7 +120,7 @@ function renderMatches(p) {
   const grid = document.getElementById("match-grid");
 
   grid.innerHTML = p.matches.map(m => `
-    <div class="match-card">
+      <a href="${m.url}" target="_blank" class="match-card">
       <div class="thumb">
         <img src="${m.thumbnail_url || `https://www.google.com/s2/favicons?domain=${m.domain}`}" />
       </div>
@@ -133,20 +133,101 @@ function renderMatches(p) {
           <span class="badge">d ${m.score1 ?? "-"}</span>
         </div>
       </div>
-    </div>
+    </a>
   `).join("");
 }
 
+const LOGO_MAP = {
+  "airbnb": "airbnb.png",
+  "vrbo": "vrbo.png",
+  "booking.com": "bookingcom.png",
+  "expedia": "expedia.png",
+  "tripadvisor": "tripadvisor.png",
+  "agoda": "agoda.png",
+  "hometogo": "hometogo.png",
+  "vacasa": "vacasa.png",
+  "lodgify": "lodgify.png",
+  "ownerrez": "ownerrez.png",
+  "hostaway": "hostaway.png",
+  "guesty": "guesty.png",
+  "hostfully": "hostfully.png",
+  "hospitable": "hospitable.png",
+  "smoobu": "smoobu.png",
+  "instagram": "instagram.png",
+  "direct": "direct.png",
+  "hidden": "globe.png"
+};
+
+function logoSrc(name) {
+  return `/logos/${LOGO_MAP[String(name || "").trim().toLowerCase()] || "globe.png"}`;
+}
+
+function bucketBy(arr, keyFn) {
+  const out = {};
+  for (const item of arr || []) {
+    const key = keyFn(item);
+    if (!out[key]) out[key] = [];
+    out[key].push(item);
+  }
+  return out;
+}
+
+function rootLabel(domain) {
+  return (domain || "").replace(/^www\./, "");
+}
+
+
 function renderClassification(p) {
+  const otaRows = (p.ota || []).map(m => `
+    <div class="classify-row">
+      <img class="classify-logo" src="${logoSrc(m.platform)}" alt="">
+      <div class="classify-main"> ${esc(m.platform || m.domain || "OTA")} </div>
+      <div class="classify-meta">${esc(m.listing_id || "—")}</div>
+    </div>
+  `).join("");
+
+  const directCount = (p.direct || []).length;
+
+  const otherGrouped = bucketBy(p.unknown || [], m => m.platform || rootLabel(m.domain) || "Unknown");
+  const otherRows = Object.entries(otherGrouped).map(([label, items]) => `
+    <div class="classify-row">
+      <img class="classify-logo" src="${logoSrc(label)}" alt="">
+      <div class="classify-main">${esc(label)}</div>
+      <div class="classify-meta">${items.length}</div>
+    </div>
+  `).join("");
+
+  const hiddenGrouped = bucketBy(p.hidden || [], m => m.hidden_reason || "hidden");
+  const hiddenRows = Object.entries(hiddenGrouped).map(([reason, items]) => `
+    <div class="classify-row">
+      <img class="classify-logo" src="${logoSrc("Hidden")}" alt="">
+      <div class="classify-main">${esc(reason)}</div>
+      <div class="classify-meta">${items.length}</div>
+    </div>
+  `).join("");
+
   document.getElementById("classify-summary").textContent =
-    `direct ${p.direct.length} · ota ${p.ota.length} · unknown ${p.unknown.length} · hidden ${p.hidden.length}`;
+    `${(p.ota || []).length} ota · ${directCount} direct/pms · ${(p.unknown || []).length} other · ${(p.hidden || []).length} hidden`;
 
   document.getElementById("classify-panel").innerHTML = `
-    <div class="badge-row" style="margin-bottom:10px;">
-      <span class="badge">direct ${p.direct.length}</span>
-      <span class="badge">ota ${p.ota.length}</span>
-      <span class="badge">unknown ${p.unknown.length}</span>
-      <span class="badge">hidden ${p.hidden.length}</span>
+    <div class="classify-section">
+      <div class="classify-head">OTAs</div>
+      ${otaRows || `<div class="pending">None</div>`}
+    </div>
+
+    <div class="classify-section">
+      <div class="classify-head">Direct / PMS</div>
+      <div class="classify-stat">${directCount}</div>
+    </div>
+
+    <div class="classify-section">
+      <div class="classify-head">Other Sources</div>
+      ${otherRows || `<div class="pending">None</div>`}
+    </div>
+
+    <div class="classify-section">
+      <div class="classify-head">Hidden</div>
+      ${hiddenRows || `<div class="pending">None</div>`}
     </div>
   `;
 }
@@ -179,6 +260,81 @@ function renderContacts(p) {
     </div>
   `).join("");
 }
+function emailQuality(email, domain) {
+  const e = String(email || "").toLowerCase();
+  const d = String(domain || "").toLowerCase();
+  if (!e) return 0;
+  if (e.endsWith("@" + d)) return 3;
+  if (e.includes("@gmail.com") || e.includes("@outlook.com") || e.includes("@hotmail.com") || e.includes("@yahoo.com")) return 1;
+  return 2;
+}
+
+function recordScore(r) {
+  const direct = r.source_bucket === "direct" ? 1000 : 0;
+
+  const sourceQuality =
+    r.source_quality === "high" ? 200 :
+    r.source_quality === "medium" ? 100 : 0;
+
+  const bestEmailQ = Math.max(0, ...(r.emails || []).map(e => emailQuality(e, r.domain)));
+  const emailScore = bestEmailQ * 100;
+
+  const phoneScore = (r.phones || []).length > 0 ? 60 : 0;
+  const addressScore = r.address ? 30 : 0;
+
+  const score1Bonus = typeof r.score1 === "number" ? Math.max(0, 40 - r.score1) : 0;
+  const rankBonus = typeof r.rank === "number" ? Math.max(0, 20 - r.rank) : 0;
+
+  return direct + sourceQuality + emailScore + phoneScore + addressScore + score1Bonus + rankBonus;
+}
+
+function bestContactRecord(records) {
+  return (records || [])
+    .slice()
+    .sort((a, b) => recordScore(b) - recordScore(a))[0] || null;
+}
+
+function csvCell(v) {
+  const s = String(v ?? "");
+  return `"${s.replaceAll(`"`, `""`)}"`;
+}
+
+function exportContactCsv() {
+  if (!lastExtracted || !lastSearched) return;
+
+  const p = lastExtracted.input_panel || {};
+  const c = bestContactRecord(lastSearched.contact?.records || []);
+
+  const row = [
+    p.submitted_listing_url || "",
+    p.metadata?.name || "",
+    p.metadata?.address || c?.address || "",
+    c?.source_bucket || "",
+    c?.domain || "",
+    c?.url || "",
+    c?.emails?.[0] || "",
+    c?.emails?.[1] || "",
+    c?.phones?.[0] || "",
+    c?.phones?.[1] || "",
+    c?.rank ?? "",
+    c?.score1 ?? "",
+    c?.error || ""
+  ];
+
+  const csv = [["input_listing_url", "property_name", "property_address", "source_bucket",
+      "source_domain", "source_url", "email_1", "email_2", "phone_1", "phone_2", "rank",
+      "score1", "scrape_error"].map(csvCell).join(","), row.map(csvCell).join(",")].join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "contact_export.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 async function extract(body) {
   const r = await fetch(API + "/pipeline/extract", {
@@ -207,17 +363,17 @@ async function run(body) {
     setError(extracted.error);
     return;
   }
+  lastExtracted = extracted;
   renderInput(extracted.input_panel);
-
-  const searchBody = {
-    ...body,
-    selected_image_url: extracted.input_panel.active_image_url
-  };
+  const searchBody = { ...body, selected_image_url: extracted.input_panel.active_image_url};
   const searched = await search(searchBody);
   if (!searched.ok) {
     setError(searched.error);
     return;
   }
+
+  lastSearched = searched;
+  document.getElementById("export-btn").disabled = false;
   renderMatches(searched.match_discovery);
   renderClassification(searched.classification);
   renderContacts(searched.contact);
@@ -231,9 +387,6 @@ function runSearch() {
   });
 }
 
-function runDemo() {
-  run({ demo: true });
-}
 </script>
 
 </body>

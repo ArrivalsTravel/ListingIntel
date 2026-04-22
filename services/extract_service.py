@@ -20,7 +20,7 @@ HEADERS = {
 REQUEST_TIMEOUT = 15
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-REF_PATH = BASE_DIR / "api" / "reference_data.json"
+REF_PATH = BASE_DIR / "reference_data.json"
 
 with open(REF_PATH, "r", encoding="utf-8") as f:
     REF = json.load(f)

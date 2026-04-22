@@ -1,6 +1,6 @@
 # contact service
 
-from api.scraper import scrape_contact
+from services.scraper import scrape_contact
 
 
 def _source_quality(bucket: str, score1: int | None, rank: int) -> str:
